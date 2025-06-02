@@ -27,11 +27,12 @@ function lexikus_get_definition_occurrences(WP_Post $definition, $posts) {
     $count = 0;
     if ($posts) {
         foreach ($posts as $post) {
-            if (stripos(get_the_content($post->ID), $definition->post_title) !== false && $definition->ID != $post->ID) {
+            if (stripos($post->post_content, $definition->post_title) !== false && $definition->ID != $post->ID) {
                 $count++;
             }
         }
     }
+
     return $count;
 }
     
@@ -50,6 +51,8 @@ add_action('wp_ajax_lexikus_get_definitions', function() {
         'post_status' => 'publish',
     ];
     $linkableQuery = new WP_Query($linkableArgs);
+    $linkablePosts = $linkableQuery->posts;
+    wp_reset_postdata();
 
     if (!$post_type) {
         wp_send_json_error(['message' => 'Type de contenu manquant']);
@@ -78,7 +81,7 @@ add_action('wp_ajax_lexikus_get_definitions', function() {
     if ($query->have_posts()) {
         while ($query->have_posts()) {
             $query->the_post();
-            $list .= '<tr><td>' . esc_html(get_the_title()) . '</td><td>' . lexikus_get_definition_occurrences(get_post(), $linkableQuery->posts) . '</td></tr>';
+            $list .= '<tr><td>' . esc_html(get_the_title()) . '</td><td>' . lexikus_get_definition_occurrences(get_post(), $linkablePosts) . '</td></tr>';
         }
         $list .= '</tbody></table>';
     } else {
